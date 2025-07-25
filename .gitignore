@@ -1,0 +1,26 @@
+.svn/
+*.obj
+*.pdb
+*.exe
+*.ilk
+*.pch
+*.res
+*.log
+*.tlog/
+*.lastbuildstate
+*.idb
+*.ipch
+*.vs/
+*.vcxproj.user
+
+# 바이너리 및 임시파일
+*.db
+*.vsidx
+*.suo
+*.tmp
+
+# Debug/Release 폴더
+Debug/
+x64/
+WinBounceBall/x64/
+WinBounceBall/Debug/
