@@ -1,4 +1,5 @@
-.svn/
+*Win32-API-Practice/
+*.svn/
 *.obj
 *.pdb
 *.exe
