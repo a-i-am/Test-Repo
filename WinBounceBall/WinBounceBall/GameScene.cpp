@@ -58,6 +58,10 @@ bool GameScene::CheckCollision(Ball* ball, Vector start, Vector end, Vector& out
 		if (!iter->GetCollider())
 			continue;
 
+		// actor->GetActorType() vs Ball -> Block
+		// actor->GetActorType() vs Ball -> Overlap
+		// actor->GetActorType() vs Ball -> Ignore
+
 		RECT rect = *iter->GetCollider()->GetCollisionRect();
 		rect.left -= BALL_SIZE * 0.5f;
 		rect.right += BALL_SIZE * 0.5f;

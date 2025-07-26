@@ -24,7 +24,7 @@ public:
 	// Ball 에다가 바로 구현
 
 	// 중력값은 대략 9.8
-	Vector _gravityVec = Vector(0, 980.f);
+	Vector _gravityVec = Vector(0.f, 980.f);
 
 	Vector velocity = {};       // 공의 속도 (speed 같은 개념)
 	Vector acceleration = {};	// 가속도

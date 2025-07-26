@@ -69,15 +69,75 @@ void Ball::applyPhysics(float deltaTime)
     velocity += acceleration * deltaTime;
 
     // velocity 에 대해서 최대 속도로 제한하고 싶다.
-    float upFactor = 400;   // 위아래
-    float sideFactor = 150; // 좌우
+    float upMaxFactor = 400;   // 위아래 (중력방향이 아래쪽으로 흘러서)
+    float sideMaxFactor = 150; // 좌우 (중력방향과 직교(접선))
 
-    if (velocity.x > sideFactor)
-        velocity.x = sideFactor;
+    // 속도 제한 하는 방식
+    bool applyVectorBreak = true;
+    if (false == applyVectorBreak)
+    {
+        // 고정 X,Y 축  속도 제한 방식
+        if (velocity.x > sideMaxFactor)
+            velocity.x = sideMaxFactor;
+        if (velocity.x < -sideMaxFactor)
+            velocity.x = -sideMaxFactor;
 
-    if (velocity.y > upFactor)
-        velocity.y = upFactor;
+        if (velocity.y > upMaxFactor)
+            velocity.y = upMaxFactor;
+        if (velocity.y < -upMaxFactor)
+            velocity.y = -upMaxFactor;
 
+        // 마찰계수 
+        float friction = 0.95f;
+        velocity.x *= friction;
+        if (std::abs(velocity.x) < 1.0f)
+            velocity.x = 0.f;
+    }
+    else
+    {
+        // 벡터 분해
+        // 중력 방향 축에 해당하는 힘을 알고 싶다.
+        Vector norGravity = _gravityVec.GetNormalize();
+
+        // 현재 속도에서 중력 방향의 축에 해당하는 힘만 추출
+        float gravityLength = velocity.Dot(norGravity);
+
+        // 중력축에 반대되는 사이드 벡터
+        // v : (3,4), x :(3,0), y : (0,4)
+        // v - x = y
+        // v - y = x
+
+        //velocity 에서 중력방향 축의 힘을 제거한, (3,0) or (0,4)같은 벡터를 구한다.
+        Vector gravityVector = norGravity * gravityLength;
+        Vector sideVector = velocity - (gravityVector);
+
+        // 사이드 벡터에 대한 힘은 
+        float sideLength = sideVector.Length();
+
+        // 중력축에 해당하는 힘이 Max치보다 크다면 제한
+        if (gravityLength > upMaxFactor)
+        {
+            gravityVector = (norGravity * upMaxFactor);
+        }
+
+        // 사이드 방향에 해당하는 힘이 Max치보다 크다면 제한
+        if (sideLength > sideMaxFactor)
+        {
+            sideVector = (sideVector.GetNormalize() * sideMaxFactor);
+        }
+
+        // 마찰계수 
+        float friction = 0.95f;
+        sideVector *= friction;
+        if (sideVector.Length() < 1.0f)
+            sideVector = Vector(0.f, 0.f);
+
+        // 최종적인 velocity
+        // v : (3,4), a :(3,0), b : (0,4)
+        // v = a + b
+        velocity = gravityVector + sideVector;
+    }
+   
 
     // 속도(velocity) 위치를 변화시킨다.
     Vector oldPos = GetPos();
@@ -92,10 +152,17 @@ void Ball::applyPhysics(float deltaTime)
     Vector start = oldPos;
     Vector end = newPos;
 
+    // 비트마스크
+    // 비행기 vs 비행기의 총알 : (ignore)충돌을 무시한다.  bit mask
+    // 언리얼
+    // ObjectType : Pawn, Static, Dynamic, ...
+    // Panw vs Pawn : Overlap (true), Blokc(false)
+    // Pawn vs Static Object(지형지물) : Block(true), Overlap(false);
+
     if (scene->CheckCollision(this, start, end, normal, hitPos))
     {
         // 바운스볼은 입사 벡터가 크기가 항상 고정
-        Vector inputVector = velocity.GetNormalize() * upFactor;
+        Vector inputVector = velocity.GetNormalize() * upMaxFactor;
         
         // 충돌체크가 되었다
         // 반사벡터를 통해서, 반대로 튕겨 나가야 한다.
@@ -105,7 +172,7 @@ void Ball::applyPhysics(float deltaTime)
         // 한번 부딪힐때마다 힘이 절반으로 줄었으면 좋겟다.
         float reflectFactor = 1.0f; // 탄성 계수
 
-        Vector reflect = velocity + (normal * 2.0f * -velocity.Dot(normal));
+        Vector reflect = inputVector + (normal * 2.0f * -inputVector.Dot(normal));
         velocity = reflect * reflectFactor;
 
         newPos = hitPos;    // newPos은 사각형을 뚫고 지나가니, 사각형 위쪽 좌표로 보정
