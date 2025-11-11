@@ -4,7 +4,6 @@
 #include "TimeManager.h"
 #include "ResourceManager.h"
 
-#include "LobbyScene.h"
 #include "GameScene.h"
 #include "EditorScene.h"
 
